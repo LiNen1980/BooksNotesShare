@@ -1,0 +1,64 @@
+<!-- 让网页识别 Obsidian 的提示框写法：> [!question] 标题 -->
+<style>
+  .callout { --c: 68, 138, 255; margin: 1em 0; padding: 12px 16px; border-left: 4px solid rgb(var(--c)); border-radius: 6px; background: rgba(var(--c), 0.08); }
+  .callout .callout { margin: 0.8em 0; }
+  .callout-title { font-weight: 600; color: rgb(var(--c)); display: flex; gap: 6px; align-items: baseline; }
+  summary.callout-title { cursor: pointer; }
+  .callout-icon { flex: none; }
+  .callout-content > :first-child { margin-top: 0.5em; }
+  .callout-content > :last-child { margin-bottom: 0; }
+  .callout[data-callout="question"], .callout[data-callout="help"], .callout[data-callout="faq"] { --c: 236, 117, 0; }
+  .callout[data-callout="tip"], .callout[data-callout="hint"], .callout[data-callout="important"] { --c: 0, 168, 164; }
+  .callout[data-callout="abstract"], .callout[data-callout="summary"], .callout[data-callout="tldr"] { --c: 0, 176, 255; }
+  .callout[data-callout="success"], .callout[data-callout="check"], .callout[data-callout="done"] { --c: 8, 185, 78; }
+  .callout[data-callout="warning"], .callout[data-callout="caution"], .callout[data-callout="attention"] { --c: 236, 117, 0; }
+  .callout[data-callout="failure"], .callout[data-callout="fail"], .callout[data-callout="missing"], .callout[data-callout="danger"], .callout[data-callout="error"], .callout[data-callout="bug"] { --c: 233, 49, 71; }
+  .callout[data-callout="example"] { --c: 120, 82, 238; }
+  .callout[data-callout="quote"], .callout[data-callout="cite"] { --c: 120, 120, 120; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var ICONS = { question: '❓', help: '❓', faq: '❓', tip: '💡', hint: '💡', important: '💡', note: '📝', info: 'ℹ️', todo: '☑️',
+    abstract: '📋', summary: '📋', tldr: '📋', success: '✅', check: '✅', done: '✅', warning: '⚠️', caution: '⚠️', attention: '⚠️',
+    failure: '❌', fail: '❌', missing: '❌', danger: '⚡', error: '⚡', bug: '🐞', example: '📑', quote: '❝', cite: '❝' };
+
+  document.querySelectorAll('blockquote').forEach(function (bq) {
+    var p = bq.firstElementChild;
+    if (!p || p.tagName !== 'P' || !p.firstChild || p.firstChild.nodeType !== 3) return;
+    var first = p.firstChild;
+    var m = first.nodeValue.match(/^\s*\[!([\w-]+)\]([+-]?)[ \t]*/);
+    if (!m) return;
+    var type = m[1].toLowerCase(), fold = m[2];
+    first.nodeValue = first.nodeValue.slice(m[0].length);
+
+    // 第一行是标题，换行之后是正文
+    var titleText = document.createElement('span');
+    while (p.firstChild) {
+      var n = p.firstChild;
+      if (n.nodeType === 3) {
+        var i = n.nodeValue.indexOf('\n');
+        if (i >= 0) { titleText.append(n.nodeValue.slice(0, i)); n.nodeValue = n.nodeValue.slice(i + 1); break; }
+      } else if (n.nodeName === 'BR') { p.removeChild(n); break; }
+      titleText.appendChild(n);
+    }
+    if (!titleText.textContent.trim()) titleText.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+    if (!p.textContent.trim() && !p.querySelector('img')) p.remove();
+
+    var box = document.createElement(fold ? 'details' : 'div');
+    if (fold === '+') box.open = true;
+    box.className = 'callout';
+    box.setAttribute('data-callout', type);
+    var title = document.createElement(fold ? 'summary' : 'div');
+    title.className = 'callout-title';
+    var icon = document.createElement('span');
+    icon.className = 'callout-icon';
+    icon.textContent = ICONS[type] || '📝';
+    title.append(icon, titleText);
+    var content = document.createElement('div');
+    content.className = 'callout-content';
+    while (bq.firstChild) content.appendChild(bq.firstChild);
+    box.append(title, content);
+    bq.replaceWith(box);
+  });
+});
+</script>
